@@ -1,0 +1,232 @@
+package BANK;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+
+public class EnhancedBankingApp {
+    private static final Scanner scanner = new Scanner(System.in);
+    private static Map<String, Account> accounts = new HashMap<>();
+    private static String currentUser = null;
+
+    public static void main(String[] args) {
+        while (true) {
+            if (currentUser == null) {
+                displayMainMenu();
+            } else {
+                displayAccountMenu();
+            }
+        }
+    }
+
+    private static void displayMainMenu() {
+        System.out.println("Welcome to the Enhanced Banking Application");
+        System.out.println("1. Create Account");
+        System.out.println("2. Login");
+        System.out.println("3. Exit");
+        System.out.print("Enter your choice: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline left-over
+
+        switch (choice) {
+            case 1:
+                createAccount();
+                break;
+            case 2:
+                login();
+                break;
+            case 3:
+                System.out.println("Thank you for using Enhanced Banking Application. Goodbye!");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid choice. Please enter a number between 1 and 3.");
+        }
+    }
+
+    private static void displayAccountMenu() {
+        Account account = accounts.get(currentUser);
+
+        System.out.println("Welcome, " + currentUser);
+        System.out.println("1. Deposit Money");
+        System.out.println("2. Withdraw Money");
+        System.out.println("3. Check Balance");
+        System.out.println("4. Transfer Funds");
+        System.out.println("5. View Transaction History");
+        System.out.println("6. Logout");
+        System.out.print("Enter your choice: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline left-over
+
+        switch (choice) {
+            case 1:
+                deposit(account);
+                break;
+            case 2:
+                withdraw(account);
+                break;
+            case 3:
+                checkBalance(account);
+                break;
+            case 4:
+                transferFunds(account);
+                break;
+            case 5:
+                viewTransactionHistory(account);
+                break;
+            case 6:
+                logout();
+                break;
+            default:
+                System.out.println("Invalid choice. Please enter a number between 1 and 6.");
+        }
+    }
+
+    private static void createAccount() {
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine();
+
+        if (accounts.containsKey(username)) {
+            System.out.println("Account already exists.");
+        } else {
+            System.out.print("Enter password: ");
+            String password = scanner.nextLine();
+            accounts.put(username, new Account(username, password));
+            System.out.println("Account created successfully.");
+        }
+    }
+
+    private static void login() {
+        System.out.print("Enter username: ");
+        String username = scanner.nextLine();
+
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
+
+        Account account = accounts.get(username);
+        if (account != null && account.getPassword().equals(password)) {
+            currentUser = username;
+            System.out.println("Login successful.");
+        } else {
+            System.out.println("Invalid username or password.");
+        }
+    }
+
+    private static void logout() {
+        currentUser = null;
+        System.out.println("Logged out successfully.");
+    }
+
+    private static void deposit(Account account) {
+        System.out.print("Enter amount to deposit: ");
+        double amount = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline left-over
+
+        if (amount > 0) {
+            account.deposit(amount);
+            System.out.println("Successfully deposited $" + amount);
+        } else {
+            System.out.println("Deposit amount must be positive.");
+        }
+    }
+
+    private static void withdraw(Account account) {
+        System.out.print("Enter amount to withdraw: ");
+        double amount = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline left-over
+
+        if (amount > 0) {
+            if (amount <= account.getBalance()) {
+                account.withdraw(amount);
+                System.out.println("Successfully withdrew $" + amount);
+            } else {
+                System.out.println("Insufficient balance.");
+            }
+        } else {
+            System.out.println("Withdrawal amount must be positive.");
+        }
+    }
+
+    private static void checkBalance(Account account) {
+        System.out.println("Current balance: $" + account.getBalance());
+    }
+
+    private static void transferFunds(Account account) {
+        System.out.print("Enter recipient username: ");
+        String recipientUsername = scanner.nextLine();
+
+        Account recipient = accounts.get(recipientUsername);
+
+        if (recipient != null && !recipientUsername.equals(currentUser)) {
+            System.out.print("Enter amount to transfer: ");
+            double amount = scanner.nextDouble();
+            scanner.nextLine(); // Consume newline left-over
+
+            if (amount > 0) {
+                if (amount <= account.getBalance()) {
+                    account.withdraw(amount);
+                    recipient.deposit(amount);
+                    System.out.println("Successfully transferred $" + amount + " to " + recipientUsername);
+                    account.addTransaction("Transferred $" + amount + " to " + recipientUsername);
+                    recipient.addTransaction("Received $" + amount + " from " + currentUser);
+                } else {
+                    System.out.println("Insufficient balance.");
+                }
+            } else {
+                System.out.println("Transfer amount must be positive.");
+            }
+        } else {
+            System.out.println("Invalid recipient or you cannot transfer to yourself.");
+        }
+    }
+
+    private static void viewTransactionHistory(Account account) {
+        System.out.println("Transaction History:");
+        for (String transaction : account.getTransactionHistory()) {
+            System.out.println(transaction);
+        }
+    }
+}
+
+class Account {
+    private String username;
+    private String password;
+    private double balance;
+    private ArrayList<String> transactionHistory;
+
+    public Account(String username, String password) {
+        this.username = username;
+        this.password = password;
+        this.balance = 0.0;
+        this.transactionHistory = new ArrayList<>();
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void deposit(double amount) {
+        balance += amount;
+        addTransaction("Deposited $" + amount);
+    }
+
+    public void withdraw(double amount) {
+        balance -= amount;
+        addTransaction("Withdrew $" + amount);
+    }
+
+    public void addTransaction(String transaction) {
+        transactionHistory.add(transaction);
+    }
+
+    public ArrayList<String> getTransactionHistory() {
+        return transactionHistory;
+    }
+}
